@@ -2,214 +2,233 @@ import tkinter as tk
 from tkinter import messagebox
 import random
 
-# Variabel untuk menyimpan data pengguna dan pertanyaan
-data_pengguna = {}
-pengguna_aktif = None
-pertanyaan_list = []
+# Variabel umum untuk menyimpan data pengguna dan pertanyaan
+users = {}
+current_user = None
+questions = []
 
-# Fungsi untuk mendaftar pengguna baru
+# Stack untuk menyimpan pertanyaan
+question_stack = []
+
+# Queue untuk menyimpan pertanyaan
+question_queue = []
+
+# Fungsi registrasi pengguna baru
 def daftar_pengguna():
     def simpan_user():
         username = username_entry.get()
         password = password_entry.get()
         
         if username and password:
-            if username in data_pengguna:
-                messagebox.showerror("Error Registrasi", "Username sudah terdaftar!")
+            if username in users:
+                messagebox.showerror("Registrasi Error", "Username sudah terdaftar!")
             else:
-                data_pengguna[username] = password
+                users[username] = password
                 messagebox.showinfo("Registrasi", "Registrasi berhasil! Silakan login.")
-                jendela_registrasi.destroy()
+                register_window.destroy()
         else:
-            messagebox.showerror("Error Registrasi", "Username dan password tidak boleh kosong!")
+            messagebox.showerror("Registrasi Error", "Username dan password tidak boleh kosong!")
 
-    jendela_registrasi = tk.Toplevel(root)
-    jendela_registrasi.title("Registrasi Pengguna Baru")
-    jendela_registrasi.configure(bg='#FBF6E9')
+    register_window = tk.Toplevel(root)
+    register_window.title("Registrasi")
+    register_window.configure(bg='#FBF6E9')
 
-    tk.Label(jendela_registrasi, text="Registrasi Pengguna Baru", font=("Arial", 16), bg='#FBF6E9', fg="#118B50").pack(pady=10)
+    title_label = tk.Label(register_window, text="Registrasi Pengguna Baru", font=("Arial", 16), bg='#FBF6E9', fg="#118B50")
+    title_label.pack(pady=10)
 
-    tk.Label(jendela_registrasi, text="Username:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)
-    username_entry = tk.Entry(jendela_registrasi)
+    tk.Label(register_window, text="Username:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)
+    username_entry = tk.Entry(register_window)
     username_entry.grid(row=0, column=1, pady=5)
 
-    tk.Label(jendela_registrasi, text="Password:", bg='#FBF6E9', fg="#118B50").grid(row=1, column=0, pady=5)
-    password_entry = tk.Entry(jendela_registrasi, show="*")
+    tk.Label(register_window, text="Password:", bg='#FBF6E9', fg="#118B50").grid(row=1, column=0, pady=5)
+    password_entry = tk.Entry(register_window, show="*")
     password_entry.grid(row=1, column=1, pady=5)
 
-    tombol_simpan = tk.Button(jendela_registrasi, text="Daftar", command=simpan_user, bg="#5DB996", fg="#FFFFFF")
-    tombol_simpan.grid(row=2, columnspan=2, pady=10)
+    save_button = tk.Button(register_window, text="Registrasi", command=simpan_user, bg="#5DB996", fg="#FFFFFF")
+    save_button.grid(row=2, columnspan=2, pady=10)
 
 # Fungsi login
 def login():
-    global pengguna_aktif
+    global current_user
 
     username = username_entry.get()
     password = password_entry.get()
 
-    if username in data_pengguna and data_pengguna[username] == password:
-        pengguna_aktif = username
-        messagebox.showinfo("Login", "Login berhasil!")
+    if username in users and users[username] == password:
+        current_user = username
+        messagebox.showinfo("Login", "Login sukses!")
         menu_utama()
     else:
-        messagebox.showerror("Error Login", "Username atau password salah!")
+        messagebox.showerror("Login Error", "Username atau password salah!")
 
 # Fungsi untuk menu utama
 def menu_utama():
     for widget in root.winfo_children():
         widget.destroy()
 
-    tk.Label(root, text=f"Halo {pengguna_aktif}!", font=("Arial", 14), bg='#FBF6E9', fg="#118B50").pack(pady=10)
+    greeting_label = tk.Label(root, text=f"Halo {current_user}!", font=("Arial", 14), bg='#FBF6E9', fg="#118B50")
+    greeting_label.pack(pady=10)
 
-    tk.Button(root, text="Tambah Pertanyaan", command=tambah_pertanyaan, bg="#FBF6E9", fg="#118B50").pack(pady=5)
-    tk.Button(root, text="Edit Pertanyaan", command=edit_pertanyaan, bg="#FBF6E9", fg="#118B50").pack(pady=5)
-    tk.Button(root, text="Hapus Pertanyaan", command=hapus_pertanyaan, bg="#FBF6E9", fg="#118B50").pack(pady=5)
-    tk.Button(root, text="Mulai Kuis", command=mulai_kuis, bg="#FBF6E9", fg="#118B50").pack(pady=5)
-    tk.Button(root, text="Keluar", command=root.quit, bg="#FBF6E9", fg="#118B50").pack(pady=5)
+    add_question_button = tk.Button(root, text="Tambah Soal", command=add_question, bg="#FBF6E9", fg="#118B50")
+    add_question_button.pack(pady=5)
+
+    edit_pertanyaan_button = tk.Button(root, text="Edit Soal", command=edit_pertanyaan, bg="#FBF6E9", fg="#118B50")
+    edit_pertanyaan_button.pack(pady=5)
+
+    hapus_pertanyaan_button = tk.Button(root, text="Hapus Soal", command=hapus_pertanyaan, bg="#FBF6E9", fg="#118B50")
+    hapus_pertanyaan_button.pack(pady=5)
+
+    mulai_kuis_button = tk.Button(root, text="Mulai Kuis", command=mulai_kuis, bg="#FBF6E9", fg="#118B50")
+    mulai_kuis_button.pack(pady=5)
+
+    exit_button = tk.Button(root, text="Keluar", command=root.quit, bg="#FBF6E9", fg="#118B50")
+    exit_button.pack(pady=5)
 
 # Fungsi menambahkan pertanyaan
-def tambah_pertanyaan():
-    def simpan_pertanyaan():
-        pertanyaan = pertanyaan_entry.get()
-        jawaban = jawaban_entry.get()
-        pilihan = pilihan_entry.get().split(',')
-        if pertanyaan and jawaban and pilihan:
-            pertanyaan_list.append((pertanyaan, jawaban, [opt.strip() for opt in pilihan]))
-            messagebox.showinfo("Tambah Pertanyaan", "Pertanyaan berhasil ditambahkan!")
-            jendela_tambah.destroy()
+def add_question():
+    def save_question():
+        question = question_entry.get()
+        answer = answer_entry.get()
+        options = options_entry.get().split(',')
+        if question and answer and options:
+            questions.append((question, answer, [opt.strip() for opt in options]))
+            question_stack.append((question, answer, [opt.strip() for opt in options]))
+            question_queue.append((question, answer, [opt.strip() for opt in options]))
+            messagebox.showinfo("Tambah Soal", "Soal berhasil ditambahkan!")
+            add_window.destroy()
         else:
-            messagebox.showerror("Error", "Semua field harus diisi!")
+            messagebox.showerror("Error", "Pertanyaan, jawaban, dan pilihan tidak boleh kosong!")
 
-    jendela_tambah = tk.Toplevel(root)
-    jendela_tambah.title("Tambah Pertanyaan")
-    jendela_tambah.configure(bg='#FBF6E9')
+    add_window = tk.Toplevel(root)
+    add_window.title("Tambah Soal")
+    add_window.configure(bg='#FBF6E9')
 
-    tk.Label(jendela_tambah , text="Pertanyaan:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)
-    pertanyaan_entry = tk.Entry(jendela_tambah, width=50)
-    pertanyaan_entry.grid(row=0, column=1, pady=5)
+    tk.Label(add_window, text="Pertanyaan:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)
+    question_entry = tk.Entry(add_window, width=50)
+    question_entry.grid(row=0, column=1, pady=5)
 
-    tk.Label(jendela_tambah, text="Jawaban:", bg='#FBF6E9', fg="#118B50").grid(row=1, column=0, pady=5)
-    jawaban_entry = tk.Entry(jendela_tambah)
-    jawaban_entry.grid(row=1, column=1, pady=5)
+    tk.Label(add_window, text="Jawaban:", bg='#FBF6E9', fg="#118B50").grid(row=1, column=0, pady=5)
+    answer_entry = tk.Entry(add_window)
+    answer_entry.grid(row=1, column=1, pady=5)
 
-    tk.Label(jendela_tambah, text="Pilihan (pisahkan dengan koma):", bg='#FBF6E9', fg="#118B50").grid(row=2, column=0, pady=5)
-    pilihan_entry = tk.Entry(jendela_tambah)
-    pilihan_entry.grid(row=2, column=1, pady=5)
+    tk.Label(add_window, text="Pilihan (pisahkan dengan koma):", bg='#FBF6E9', fg="#118B50").grid(row=2, column=0, pady=5)
+    options_entry = tk.Entry(add_window)
+    options_entry.grid(row=2, column=1, pady=5)
 
-    tombol_simpan = tk.Button(jendela_tambah, text="Simpan", command=simpan_pertanyaan, bg="#5DB996", fg="#FFFFFF")
-    tombol_simpan.grid(row=3, columnspan=2, pady=10)
+    save_button = tk.Button(add_window, text="Simpan", command=save_question, bg="#5DB996", fg="#FFFFFF")
+    save_button.grid(row=3, columnspan=2, pady=10)
 
-# Fungsi untuk mengedit pertanyaan
+# Fungsi untuk edit pertanyaan
 def edit_pertanyaan():
     def simpan_edit():
         try:
             index = int(index_entry.get()) - 1
-            if 0 <= index < len(pertanyaan_list):
-                pertanyaan_baru = pertanyaan_entry.get()
-                jawaban_baru = jawaban_entry.get()
-                pilihan_baru = pilihan_entry.get().split(',')
-                if pertanyaan_baru and jawaban_baru and pilihan_baru:
-                    pertanyaan_list[index] = (pertanyaan_baru, jawaban_baru, [opt.strip() for opt in pilihan_baru])
-                    messagebox.showinfo("Edit Pertanyaan", "Pertanyaan berhasil diubah!")
-                    jendela_edit.destroy()
+            if 0 <= index < len(questions):
+                new_question = question_entry.get()
+                new_answer = answer_entry.get()
+                new_options = options_entry.get().split(',')
+                if new_question and new_answer and new_options:
+                    questions[index] = (new_question, new_answer, [opt.strip() for opt in new_options])
+                    messagebox.showinfo("Edit Soal", "Soal berhasil diubah!")
+                    edit_window.destroy()
                 else:
-                    messagebox.showerror("Error", "Semua field harus diisi!")
+                    messagebox.showerror("Error", "Pertanyaan, jawaban, dan pilihan tidak boleh kosong!")
             else:
-                messagebox.showerror("Error", "Nomor pertanyaan tidak valid!")
+                messagebox.showerror("Error", "Nomor soal tidak valid!")
         except ValueError:
-            messagebox.showerror("Error", "Masukkan nomor pertanyaan yang valid!")
+            messagebox.showerror("Error", "Masukkan nomor soal yang valid!")
 
-    jendela_edit = tk.Toplevel(root)
-    jendela_edit.title("Edit Pertanyaan")
-    jendela_edit.configure(bg='#FBF6E9')
+    edit_window = tk.Toplevel(root)
+    edit_window.title("Edit Soal")
+    edit_window.configure(bg='#FBF6E9')
 
-    tk.Label(jendela_edit, text="Nomor Pertanyaan:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)
-    index_entry = tk.Entry(jendela_edit)
+    tk.Label(edit_window, text="Nomor Soal:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)
+    index_entry = tk.Entry(edit_window)
     index_entry.grid(row=0, column=1, pady=5)
 
-    tk.Label(jendela_edit, text="Pertanyaan Baru:", bg='#FBF6E9', fg="#118B50").grid(row=1, column=0, pady=5)
-    pertanyaan_entry = tk.Entry(jendela_edit, width=50)
-    pertanyaan_entry.grid(row=1, column=1, pady=5)
+    tk.Label(edit_window, text="Pertanyaan Baru:", bg='#FBF6E9', fg="#118B50").grid(row=1, column=0, pady=5)
+    question_entry = tk.Entry(edit_window, width=50)
+    question_entry.grid(row=1, column=1, pady=5)
 
-    tk.Label(jendela_edit, text="Jawaban Baru:", bg='#FBF6E9', fg="#118B50").grid(row=2, column=0, pady=5)
-    jawaban_entry = tk.Entry(jendela_edit)
-    jawaban_entry.grid(row=2, column=1, pady=5)
+    tk.Label(edit_window, text="Jawaban Baru:", bg='#FBF6E9', fg="#118B50").grid(row=2, column=0, pady=5)
+    answer_entry = tk.Entry(edit_window)
+    answer_entry.grid(row=2, column=1, pady=5)
 
-    tk.Label(jendela_edit, text="Pilihan Baru (pisahkan dengan koma):", bg='#FBF6E9', fg="#118B50").grid(row=3, column=0, pady=5)
-    pilihan_entry = tk.Entry(jendela_edit)
-    pilihan_entry.grid(row=3, column=1, pady=5)
+    tk.Label(edit_window, text="Pilihan Baru (pisahkan dengan koma):", bg='#FBF6E9', fg="#118B50").grid(row=3, column=0, pady=5)
+    options_entry = tk.Entry(edit_window)
+    options_entry.grid(row=3, column=1, pady=5)
 
-    tombol_simpan = tk.Button(jendela_edit, text="Simpan", command=simpan_edit, bg="#5DB996", fg="#FFFFFF")
-    tombol_simpan.grid(row=4, columnspan=2, pady=10)
+    save_button = tk.Button(edit_window, text="Simpan", command=simpan_edit, bg="#5DB996", fg="#FFFFFF")
+    save_button.grid(row=4, columnspan=2, pady=10)
 
 # Fungsi untuk menghapus pertanyaan
 def hapus_pertanyaan():
-    def hapus():
+    def menghapus():
         try:
             index = int(index_entry.get()) - 1
-            if 0 <= index < len(pertanyaan_list):
-                del pertanyaan_list[index]
-                messagebox.showinfo("Hapus Pertanyaan", "Pertanyaan berhasil dihapus!")
-                jendela_hapus.destroy()
+            if 0 <= index < len(questions):
+                del questions[index]
+                messagebox.showinfo("Hapus Soal", "Soal berhasil dihapus!")
+                delete_window.destroy()
             else:
-                messagebox.showerror("Error", "Nomor pertanyaan tidak valid!")
+                messagebox.showerror("Error", "Nomor soal tidak valid!")
         except ValueError:
-            messagebox.showerror("Error", "Masukkan nomor pertanyaan yang valid!")
+            messagebox.showerror("Error", "Masukkan nomor soal yang valid!")
 
-    jendela_hapus = tk.Toplevel(root)
-    jendela_hapus.title("Hapus Pertanyaan")
-    jendela_hapus.configure(bg='#FBF6E9')
+    delete_window = tk.Toplevel(root)
+    delete_window.title("Hapus Soal")
+    delete_window.configure(bg='#FBF6E9')
 
-    tk.Label(jendela_hapus, text="Nomor Pertanyaan:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)
-    index_entry = tk.Entry(jendela_hapus)
+    tk.Label(delete_window, text="Nomor Soal:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)
+    index_entry = tk.Entry(delete_window)
     index_entry.grid(row=0, column=1, pady=5)
 
-    tombol_hapus = tk.Button(jendela_hapus, text="Hapus", command=hapus, bg="#5DB996", fg="#FFFFFF")
-    tombol_hapus.grid(row=1, columnspan=2, pady=10)
+    delete_button = tk.Button(delete_window, text="Hapus", command=menghapus, bg="#5DB996", fg="#FFFFFF")
+    delete_button.grid(row=1, columnspan=2, pady=10)
 
 # Fungsi untuk memulai kuiz
 def mulai_kuis():
-    if not pertanyaan_list:
-        messagebox.showerror("Kuis", "Belum ada pertanyaan yang tersedia!")
+    if not questions:
+        messagebox.showerror("Kuis", "Belum ada soal yang tersedia!")
         return
 
     def pertanyaan_selanjutnya():
-        nonlocal index_pertanyaan
-        if index_pertanyaan < len(pertanyaan_list):
-            label_pertanyaan.config(text=pertanyaan_list[index_pertanyaan][0])
-            pilihan = pertanyaan_list[index_pertanyaan][2]
-            random.shuffle(pilihan)  # Mengacak pilihan jawaban
-            for i, pilihan_jawaban in enumerate(pilihan):
-                tombol_pilihan[i].config(text=pilihan_jawaban, command=lambda opt=pilihan_jawaban: cek_jawaban(opt))
+        nonlocal question_index
+        if question_index < len(questions):
+            question_label.config(text=questions[question_index][0])
+            options = questions[question_index][2]
+            random.shuffle(options)  # Mengacak pilihan jawaban
+            for i, option in enumerate(options):
+                option_buttons[i].config(text=option, command=lambda opt=option: cek_jawaban(opt))
         else:
-            messagebox.showinfo("Kuis", f"Kuis selesai! Skor Anda: {skor}/{len(pertanyaan_list)}")
-            jendela_kuis.destroy()
+            messagebox.showinfo("Kuis", f"Kuis selesai! Skor Anda: {score}/{len(questions)}")
+            quiz_window.destroy()
 
-    def cek_jawaban(jawaban_terpilih):
-        nonlocal index_pertanyaan, skor
-        if jawaban_terpilih == pertanyaan_list[index_pertanyaan][1]:
-            skor += 1
+    def cek_jawaban(selected_answer):
+        nonlocal question_index, score
+        if selected_answer == questions[question_index][1]:
+            score += 1
             messagebox.showinfo("Kuis", "Jawaban Benar!")
         else:
-            messagebox.showerror("Kuis", "Jawaban Salah!")
-        index_pertanyaan += 1
+            messagebox.showerror("Kuis", "Salah!")
+        question_index += 1
         pertanyaan_selanjutnya()
 
-    jendela_kuis = tk.Toplevel(root)
-    jendela_kuis.title("Kuis")
-    jendela_kuis.configure(bg='#FBF6E9')
+    quiz_window = tk.Toplevel(root)
+    quiz_window.title("Kuis")
+    quiz_window.configure(bg='#FBF6E9')
 
-    index_pertanyaan = 0
-    skor = 0
+    question_index = 0
+    score = 0
 
-    label_pertanyaan = tk.Label(jendela_kuis, text="", font=("Arial", 16), bg='#FBF6E9', fg="#118B50")
-    label_pertanyaan.pack(pady=10)
+    question_label = tk.Label(quiz_window, text="", font=("Arial", 16), bg='#FBF6E9', fg="#118B50")
+    question_label.pack(pady=10)
 
-    tombol_pilihan = []
+    option_buttons = []
     for _ in range(4):  # Membuat 4 tombol untuk pilihan jawaban
-        tombol = tk.Button(jendela_kuis, text="", bg="#5DB996", fg="#FFFFFF")
-        tombol.pack(pady=5)
-        tombol_pilihan.append(tombol)
+        button = tk.Button(quiz_window, text="", bg="#5DB996", fg="#FFFFFF")
+        button.pack(pady=5)
+        option_buttons.append(button)
 
     pertanyaan_selanjutnya()
 
@@ -218,24 +237,25 @@ root = tk.Tk()
 root.title("Aplikasi Kuis")
 root.configure(bg='#FBF6E9')  # Ubah latar belakang menjadi Cream
 
-frame_login = tk.Frame(root, bg='#FBF6E9')  # Ubah latar belakang menjadi Cream
-frame_login.pack(pady=20)
+login_frame = tk.Frame(root, bg='#FBF6E9')  # Ubah latar belakang menjadi Cream
+login_frame.pack(pady=20)
 
 # Tambahkan judul di tengah
-tk.Label(frame_login, text="LOGIN", font=("Arial", 16), bg='#FBF6E9', fg="#118B50").grid(row=0, columnspan=2, pady=10)  # Menempatkan judul di atas
+title_label = tk.Label(login_frame, text="LOGIN", font=("Arial", 16), bg='#FBF6E9', fg="#118B50")  # Ubah fg menjadi Dark Green
+title_label.grid(row=0, columnspan=2, pady=10)  # Menempatkan judul di atas
 
-tk.Label(frame_login, text="Username:", bg='#FBF6E9', fg="#118B50").grid(row=1, column=0, pady=5)  # Ubah fg menjadi Dark Green
-username_entry = tk.Entry(frame_login)
+tk.Label(login_frame, text="Username:", bg='#FBF6E9', fg="#118B50").grid(row=1, column=0, pady=5)  # Ubah fg menjadi Dark Green
+username_entry = tk.Entry(login_frame)
 username_entry.grid(row=1, column=1, pady=5)
 
-tk.Label(frame_login, text="Password:", bg='#FBF6E9', fg="#118B50").grid(row=2, column=0, pady=5)  # Ubah fg menjadi Dark Green
-password_entry = tk.Entry(frame_login, show="*")
+tk.Label(login_frame, text="Password:", bg='#FBF6E9', fg="#118B50").grid(row=2, column=0, pady=5)  # Ubah fg menjadi Dark Green
+password_entry = tk.Entry(login_frame, show="*")
 password_entry.grid(row=2, column=1, pady=5)
 
-tombol_login = tk.Button(frame_login, text="Login", command=login, bg="#5DB996", fg="#FFFFFF")  # Ubah bg menjadi Teal
-tombol_login.grid(row=3, column=0, pady=10)
+login_button = tk.Button(login_frame, text="Login", command=login, bg="#5DB996", fg="#FFFFFF")  # Ubah bg menjadi Teal
+login_button.grid(row=3, column=0, pady=10)
 
-tombol_daftar = tk.Button(frame_login, text="Daftar", command=daftar_pengguna, bg="#5DB996", fg="#FFFFFF")  # Ubah bg menjadi Teal
-tombol_daftar.grid(row=3, column=1, pady=10)
+register_button = tk.Button(login_frame, text="Sign Up", command=daftar_pengguna, bg="#5DB996", fg="#FFFFFF")  # Ubah bg menjadi Teal
+register_button.grid(row=3, column=1, pady=10)
 
 root.mainloop()
