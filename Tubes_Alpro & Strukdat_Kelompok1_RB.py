@@ -2,18 +2,18 @@ import tkinter as tk
 from tkinter import messagebox
 import random
 
-#Variabel umum untuk menyimpan data pengguna dan pertanyaan 
+# Variabel umum untuk menyimpan data pengguna dan pertanyaan
 users = {}
 current_user = None
-questions = [
-    ("Apa ibukota Indonesia?", "Jakarta", ["Jakarta", "Bandung", "Surabaya", "Medan"]),
-    ("Berasal darimanakah tari Saman itu?", "Aceh", ["Aceh", "Bali", "Jawa", "Sumatera"]),
-    ("Apa mata uang negara Malaysia?", "Ringgit", ["Rupiah", "Baht", "Ringgit", "Dollar"]),
-    ("Berapakah hasil dari 6 * 5?", "30", ["25", "30", "35", "40"]),
-    ("Tahun berapa Indonesia merdeka?", "1945", ["1945", "1950", "1965", "1970"])
-]
+questions = []
 
-# Fungsi registrasi pengguna baru 
+# Stack untuk menyimpan pertanyaan
+question_stack = []
+
+# Queue untuk menyimpan pertanyaan
+question_queue = []
+
+# Fungsi registrasi pengguna baru
 def daftar_pengguna():
     def simpan_user():
         username = username_entry.get()
@@ -33,6 +33,9 @@ def daftar_pengguna():
     register_window.title("Registrasi")
     register_window.configure(bg='#FBF6E9')
 
+    title_label = tk.Label(register_window, text="Registrasi Pengguna Baru", font=("Arial", 16), bg='#FBF6E9', fg="#118B50")
+    title_label.pack(pady=10)
+
     tk.Label(register_window, text="Username:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)
     username_entry = tk.Entry(register_window)
     username_entry.grid(row=0, column=1, pady=5)
@@ -44,7 +47,7 @@ def daftar_pengguna():
     save_button = tk.Button(register_window, text="Registrasi", command=simpan_user, bg="#5DB996", fg="#FFFFFF")
     save_button.grid(row=2, columnspan=2, pady=10)
 
-# Fungsi login 
+# Fungsi login
 def login():
     global current_user
 
@@ -58,7 +61,7 @@ def login():
     else:
         messagebox.showerror("Login Error", "Username atau password salah!")
 
-# Fungsi untuk menu utama 
+# Fungsi untuk menu utama
 def menu_utama():
     for widget in root.winfo_children():
         widget.destroy()
@@ -81,7 +84,7 @@ def menu_utama():
     exit_button = tk.Button(root, text="Keluar", command=root.quit, bg="#FBF6E9", fg="#118B50")
     exit_button.pack(pady=5)
 
-# Fungsi menambahkan pertanyaan 
+# Fungsi menambahkan pertanyaan
 def add_question():
     def save_question():
         question = question_entry.get()
@@ -89,6 +92,8 @@ def add_question():
         options = options_entry.get().split(',')
         if question and answer and options:
             questions.append((question, answer, [opt.strip() for opt in options]))
+            question_stack.append((question, answer, [opt.strip() for opt in options]))
+            question_queue.append((question, answer, [opt.strip() for opt in options]))
             messagebox.showinfo("Tambah Soal", "Soal berhasil ditambahkan!")
             add_window.destroy()
         else:
@@ -113,7 +118,7 @@ def add_question():
     save_button = tk.Button(add_window, text="Simpan", command=save_question, bg="#5DB996", fg="#FFFFFF")
     save_button.grid(row=3, columnspan=2, pady=10)
 
-# Fungsi untuk edit pertanyaan 
+# Fungsi untuk edit pertanyaan
 def edit_pertanyaan():
     def simpan_edit():
         try:
@@ -156,7 +161,7 @@ def edit_pertanyaan():
     save_button = tk.Button(edit_window, text="Simpan", command=simpan_edit, bg="#5DB996", fg="#FFFFFF")
     save_button.grid(row=4, columnspan=2, pady=10)
 
-# Fungsi untuk menghapus pertanyaan 
+# Fungsi untuk menghapus pertanyaan
 def hapus_pertanyaan():
     def menghapus():
         try:
@@ -252,39 +257,5 @@ login_button.grid(row=3, column=0, pady=10)
 
 register_button = tk.Button(login_frame, text="Sign Up", command=daftar_pengguna, bg="#5DB996", fg="#FFFFFF")  # Ubah bg menjadi Teal
 register_button.grid(row=3, column=1, pady=10)
-
-# Modifikasi bagian registrasi
-def daftar_pengguna():
-    def simpan_user():
-        username = username_entry.get()
-        password = password_entry.get()
-        
-        if username and password:
-            if username in users:
-                messagebox.showerror("Registrasi Error", "Username sudah terdaftar!")
-            else:
-                users [username] = password
-                messagebox.showinfo("Registrasi", "Registrasi berhasil! Silakan login.")
-                register_window.destroy()
-        else:
-            messagebox.showerror("Registrasi Error", "Username dan password tidak boleh kosong!")
-
-    register_window = tk.Toplevel(root)
-    register_window.title("Registrasi")
-    register_window.configure(bg='#FBF6E9')  # Ubah latar belakang menjadi Cream
-
-    title_label = tk.Label(register_window, text="Registrasi Pengguna Baru", font=("Arial", 16), bg='#FBF6E9', fg="#118B50")  # Ubah fg menjadi Dark Green
-    title_label.pack(pady=10)  # Menempatkan judul di atas
-
-    tk.Label(register_window, text="Username:", bg='#FBF6E9', fg="#118B50").grid(row=0, column=0, pady=5)  # Ubah fg menjadi Dark Green
-    username_entry = tk.Entry(register_window)
-    username_entry.grid(row=0, column=1, pady=5)
-
-    tk.Label(register_window, text="Password:", bg='#FBF6E9', fg="#118B50").grid(row=1, column=0, pady=5)  # Ubah fg menjadi Dark Green
-    password_entry = tk.Entry(register_window, show="*")
-    password_entry.grid(row=1, column=1, pady=5)
-
-    save_button = tk.Button(register_window, text="Registrasi", command=simpan_user, bg="#5DB996", fg="#FFFFFF")  # Ubah bg menjadi Teal
-    save_button.grid(row=2, columnspan=2, pady=10)
 
 root.mainloop()
